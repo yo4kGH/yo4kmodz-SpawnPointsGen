@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Spawn Generator | YO4K MODZ - DayZ Server Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-tertiary: #18181b;
+            --bg-card: #1c1c1f;
+            --border: #27272a;
+            --border-accent: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #22c55e;
+            --accent-dim: rgba(34, 197, 94, 0.15);
+            --warning: #f59e0b;
+            --warning-dim: rgba(245, 158, 11, 0.15);
+            --info: #3b82f6;
+            --danger: #ef4444;
+            --danger-dim: rgba(239, 68, 68, 0.15);
+            --modified: #a855f7;
+            --modified-dim: rgba(168, 85, 247, 0.15);
+            --fresh: #22c55e;
+            --hop: #a855f7;
+            --travel: #06b6d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            grid-column: 1/-1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header-title h1 span { color: var(--accent); }
+
+        .header-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+        .btn-secondary.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.6875rem;
+        }
+
+        /* Panels */
+        .left-panel, .right-panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 0.5rem 0.6rem;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .right-panel {
+            border-right: none;
+            border-left: 1px solid var(--border);
+        }
+
+        .section {
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.35rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 0.625rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Map Selector */
+        .map-selector {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .map-btn {
+            flex: 1;
+            padding: 0.35rem 0.3rem;
+            font-family: inherit;
+            font-size: 0.6875rem;
+            font-weight: 500;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .map-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+
+        .map-btn.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .map-btn .status {
+            display: block;
+            font-size: 0.5625rem;
+            margin-top: 0.0625rem;
+            color: var(--accent);
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.3rem 0.3rem;
+            font-family: inherit;
+            font-size: 0.6875rem;
+            font-weight: 500;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .mode-btn:hover { border-color: var(--border-accent); color: var(--text-primary); }
+        .mode-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+        /* Tier Toggle */
+        .tier-toggle {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .tier-btn {
+            flex: 1;
+            padding: 0.3rem 0.3rem;
+            font-family: inherit;
+            font-size: 0.6875rem;
+            font-weight: 500;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .tier-btn:hover { border-color: var(--border-accent); color: var(--text-primary); }
+        .tier-btn.active[data-tier="fresh"] { background: rgba(34,197,94,0.15); border-color: var(--fresh); color: var(--fresh); }
+        .tier-btn.active[data-tier="hop"] { background: rgba(168,85,247,0.15); border-color: var(--hop); color: var(--hop); }
+        .tier-btn.active[data-tier="travel"] { background: rgba(6,182,212,0.15); border-color: var(--travel); color: var(--travel); }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover { border-color: var(--border-accent); }
+        .stat-card.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(34,197,94,0.2); }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-value.fresh { color: var(--fresh); }
+        .stat-value.hop { color: var(--hop); }
+        .stat-value.travel { color: var(--travel); }
+        .stat-value.muted { color: var(--text-muted); }
+
+        .stat-label {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-top: 0.125rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            display: block;
+            padding: 0.5rem 0.6rem;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            font-size: 0.625rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .info-box strong { color: var(--accent); }
+        .info-box.warning-box { background: var(--warning-dim); border-color: var(--warning); }
+        .info-box.warning-box strong { color: var(--warning); }
+
+        /* Form Groups */
+        .form-group { margin-bottom: 0.3rem; }
+        .form-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.5625rem;
+            font-weight: 600;
+            margin-bottom: 0.125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.25rem 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6875rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 5px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.3rem; }
+
+        /* Checkbox */
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin-bottom: 0.25rem;
+        }
+        .checkbox-row input { accent-color: var(--accent); width: 12px; height: 12px; }
+
+        /* Map Area */
+        .map-area {
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        #canvas {
+            position: absolute;
+            cursor: crosshair;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+
+        .coords-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(10, 10, 11, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .coords-box span { color: var(--accent); }
+
+        .tool-bar {
+            display: flex;
+            gap: 0.375rem;
+        }
+
+        .tool-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 10, 11, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .tool-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+        .tool-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-primary); }
+
+        .help-text {
+            font-size: 0.6875rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(10, 10, 11, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            max-width: 280px;
+        }
+
+        .mode-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning);
+            color: var(--bg-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 100;
+            display: none;
+        }
+
+        .mode-indicator.active { display: block; }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 11, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            margin-top: 1rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        /* Spawn List */
+        .spawn-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .spawn-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.625rem;
+            background: var(--bg-card);
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.6875rem;
+            transition: all 0.2s ease;
+        }
+
+        .spawn-item:hover { background: var(--bg-tertiary); }
+        .spawn-item.fresh-item { border-left: 3px solid var(--fresh); }
+        .spawn-item.hop-item { border-left: 3px solid var(--hop); }
+        .spawn-item.travel-item { border-left: 3px solid var(--travel); }
+        .spawn-item.orphan { border-left: 3px solid var(--danger); background: var(--danger-dim); }
+
+        .spawn-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .spawn-info { flex: 1; overflow: hidden; }
+
+        .spawn-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .spawn-coords {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5625rem;
+            color: var(--text-muted);
+        }
+
+        .spawn-action {
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.125rem;
+        }
+
+        .spawn-action:hover { color: var(--danger); }
+
+        /* Group List */
+        .group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .group-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.625rem;
+        }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.375rem;
+        }
+
+        .group-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .group-name-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .group-name-input:focus { outline: none; border-bottom: 1px solid var(--accent); }
+
+        .group-stats {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.vanilla { background: transparent; border: 2px solid var(--text-muted); }
+
+        /* Orphan Panel */
+        .orphan-panel {
+            background: var(--danger-dim);
+            border: 1px solid var(--danger);
+            border-radius: 6px;
+            padding: 0.625rem;
+            margin-top: 0.75rem;
+        }
+        .orphan-panel h4 { color: var(--danger); font-size: 0.75rem; margin-bottom: 0.25rem; }
+        .orphan-panel p { font-size: 0.6875rem; color: var(--text-muted); }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Filter Indicator */
+        .filter-indicator {
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.6875rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+        .filter-indicator span { color: var(--accent); font-weight: 600; }
+
+        /* Tab Buttons */
+        .tab-btns {
+            display: flex;
+            gap: 0.375rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.5rem;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover { border-color: var(--border-accent); }
+        .tab-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Footer */
+        footer {
+            grid-column: 1/-1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.5rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .status-dot.loading {
+            background: var(--warning);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .hidden { display: none !important; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-accent); }
+
+        @media (max-width: 1024px) {
+            .app {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            .left-panel, .right-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="header-title">
+                <div>
+                    <h1>Player <span>Spawn Generator</span></h1>
+                    <div class="header-sub">cfgplayerspawnpoints.xml Editor</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary active" id="showLabelsBtn" onclick="toggleLabels()">Labels</button>
+                <button class="btn btn-secondary" onclick="toggleVanilla()">Vanilla Spawns</button>
+                <label class="btn btn-secondary" style="cursor:pointer">
+                    Import XML
+                    <input type="file" id="fileIn" accept=".xml" style="display:none">
+                </label>
+                <button class="btn btn-primary" onclick="doExport()">Export XML</button>
+            </div>
+        </header>
+
+        <aside class="left-panel">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Map</span>
+                </div>
+                <div class="map-selector">
+                    <button class="map-btn active" data-map="chernarus" onclick="selectMap('chernarus')">
+                        Chernarus
+                        <span class="status"></span>
+                    </button>
+                    <button class="map-btn" data-map="livonia" onclick="selectMap('livonia')">
+                        Livonia
+                        <span class="status"></span>
+                    </button>
+                    <button class="map-btn" data-map="sakhal" onclick="selectMap('sakhal')">
+                        Sakhal
+                        <span class="status"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Mode</span>
+                </div>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="spawn" onclick="setMode('spawn')">Place Spawns</button>
+                    <button class="mode-btn" data-mode="group" onclick="setMode('group')">Draw Groups</button>
+                </div>
+            </div>
+
+            <div class="section" id="tierSection">
+                <div class="section-header">
+                    <span class="section-title">Spawn Tier</span>
+                </div>
+                <div class="tier-toggle">
+                    <button class="tier-btn active" data-tier="fresh" onclick="setTier('fresh')">Fresh</button>
+                    <button class="tier-btn" data-tier="hop" onclick="setTier('hop')">Hop</button>
+                    <button class="tier-btn" data-tier="travel" onclick="setTier('travel')">Travel</button>
+                </div>
+            </div>
+
+            <div class="section" id="groupHint" style="display:none">
+                <div class="info-box warning-box">
+                    <strong>Group Mode</strong><br>Click & drag to draw group circles. Spawns inside become named groups in XML.
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Spawn Parameters</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Min Infected</label><input type="number" id="p1" value="30"></div>
+                    <div class="form-group"><label>Max Infected</label><input type="number" id="p2" value="70"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Min Player</label><input type="number" id="p3" value="65"></div>
+                    <div class="form-group"><label>Max Player</label><input type="number" id="p4" value="150"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Min Static</label><input type="number" id="p5" value="0" step="0.1"></div>
+                    <div class="form-group"><label>Max Static</label><input type="number" id="p6" value="2" step="0.1"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Generator</span>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group"><label>Density</label><input type="number" id="g1" value="4"></div>
+                    <div class="form-group"><label>Width</label><input type="number" id="g2" value="200"></div>
+                    <div class="form-group"><label>Height</label><input type="number" id="g3" value="200"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Min Steep</label><input type="number" id="g4" value="-45"></div>
+                    <div class="form-group"><label>Max Steep</label><input type="number" id="g5" value="45"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Group Settings</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Lifetime</label><input type="number" id="gp1" value="240"></div>
+                    <div class="form-group"><label>Counter</label><input type="number" id="gp2" value="-1"></div>
+                </div>
+                <label class="checkbox-row"><input type="checkbox" id="gpEnable" checked> Enable Groups</label>
+                <label class="checkbox-row"><input type="checkbox" id="gpRegular" checked> Groups as Regular</label>
+            </div>
+
+            <div class="info-box">
+                <strong>How to use:</strong><br>
+                1. Select map & spawn tier<br>
+                2. Click map to place spawns<br>
+                3. Optionally draw group circles<br>
+                4. Export to cfgplayerspawnpoints.xml
+            </div>
+        </aside>
+
+        <main class="map-area" id="mapArea">
+            <canvas id="canvas"></canvas>
+            <div class="map-overlay">
+                <div class="coords-box">
+                    X: <span id="coordX">0</span> Z: <span id="coordZ">0</span> | <span id="mapInfo">Chernarus 15360m</span>
+                </div>
+                <div class="tool-bar">
+                    <button class="tool-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                    <button class="tool-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                    <button class="tool-btn" onclick="resetView()" title="Reset View">⟲</button>
+                    <button class="tool-btn" onclick="doUndo()" title="Undo (Ctrl+Z)">↶</button>
+                    <button class="tool-btn" style="color:var(--danger)" onclick="doClear()" title="Clear All">✕</button>
+                </div>
+                <div class="help-text" id="helpText">Left-click: Place spawn | Right-click drag: Pan | Scroll: Zoom</div>
+            </div>
+            <div class="mode-indicator" id="modeIndicator">GROUP MODE - Click & drag circles</div>
+            <div class="loading-overlay" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <div class="loading-text" id="loadingText">Loading map...</div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Statistics</span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="filterTier('fresh')" title="Click to filter Fresh">
+                        <div class="stat-value fresh" id="statFresh">0</div>
+                        <div class="stat-label">Fresh</div>
+                    </div>
+                    <div class="stat-card" onclick="filterTier('hop')" title="Click to filter Hop">
+                        <div class="stat-value hop" id="statHop">0</div>
+                        <div class="stat-label">Hop</div>
+                    </div>
+                    <div class="stat-card" onclick="filterTier('travel')" title="Click to filter Travel">
+                        <div class="stat-value travel" id="statTravel">0</div>
+                        <div class="stat-label">Travel</div>
+                    </div>
+                    <div class="stat-card" onclick="filterTier(null)" title="Show all">
+                        <div class="stat-value muted" id="statGroups">0</div>
+                        <div class="stat-label">Groups</div>
+                    </div>
+                </div>
+                <div class="filter-indicator" id="filterIndicator" style="display:none">
+                    Showing: <span id="filterName">All</span>
+                    <button class="btn btn-small btn-secondary" onclick="filterTier(null)">Show All</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="tab-btns">
+                    <button class="tab-btn active" data-tab="spawns" onclick="setTab('spawns')">Spawns</button>
+                    <button class="tab-btn" data-tab="groups" onclick="setTab('groups')">Groups</button>
+                </div>
+
+                <!-- SPAWNS TAB -->
+                <div class="tab-content active" id="tab-spawns">
+                    <div class="legend">
+                        <span class="legend-item"><div class="legend-dot" style="background:var(--fresh)"></div>Fresh</span>
+                        <span class="legend-item"><div class="legend-dot" style="background:var(--hop)"></div>Hop</span>
+                        <span class="legend-item"><div class="legend-dot" style="background:var(--travel)"></div>Travel</span>
+                        <span class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div>Ungrouped</span>
+                        <span class="legend-item"><div class="legend-dot vanilla"></div>Vanilla</span>
+                    </div>
+                    <div class="spawn-list" id="spawnList">
+                        <div class="empty-state">Click map to add spawns</div>
+                    </div>
+                </div>
+
+                <!-- GROUPS TAB -->
+                <div class="tab-content" id="tab-groups">
+                    <div class="group-list" id="groupList">
+                        <div class="empty-state">Draw circles in Group Mode</div>
+                    </div>
+                    <div class="orphan-panel" id="orphanPanel" style="display:none">
+                        <h4>Ungrouped Spawns (<span id="orphanCount">0</span>)</h4>
+                        <p>Draw group circles to include these spawns</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">DayZ Editor Export</span>
+                </div>
+                <div class="form-group">
+                    <label>Marker Object</label>
+                    <select id="markerObj" onchange="document.getElementById('customMarkerWrap').style.display=this.value==='custom'?'block':'none'">
+                        <option value="GiftBox_Large_1">Gift Box (Large)</option>
+                        <option value="Land_Barrel_blue">Blue Barrel</option>
+                        <option value="Land_Barrel_red">Red Barrel</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customMarkerWrap" style="display:none">
+                    <label>Custom Classname</label>
+                    <input type="text" id="customMarker" placeholder="Land_YourObject">
+                </div>
+                <button class="btn btn-secondary" style="width:100%" onclick="doExportJSON()">Export JSON (Editor)</button>
+            </div>
+        </aside>
+
+        <footer>
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Ready - Click map to place spawns</span>
+            </div>
+            <div>DayZ 1.28 | Console Ready</div>
+        </footer>
+    </div>
+
+    <input type="file" id="mapImg" accept="image/*" style="display:none">
+
+<script>
+// ========== CONFIG ==========
+const MAPS = {
+    chernarus: {
+        name: 'Chernarus',
+        size: 15360,
+        url: 'https://raw.githubusercontent.com/BohemiaInteractive/DayZ-Central-Economy/master/CETool/ChernarusPlus/map.png',
+        spawnUrl: 'https://raw.githubusercontent.com/BohemiaInteractive/DayZ-Central-Economy/master/dayzOffline.chernarusplus/cfgplayerspawnpoints.xml'
+    },
+    livonia: {
+        name: 'Livonia',
+        size: 12800,
+        url: 'https://raw.githubusercontent.com/BohemiaInteractive/DayZ-Central-Economy/master/CETool/Enoch/map.png',
+        spawnUrl: 'https://raw.githubusercontent.com/BohemiaInteractive/DayZ-Central-Economy/master/dayzOffline.enoch/cfgplayerspawnpoints.xml'
+    },
+    sakhal: {
+        name: 'Sakhal',
+        size: 15360,
+        url: 'https://raw.githubusercontent.com/BohemiaInteractive/DayZ-Central-Economy/master/CETool/Sakhal/map.png',
+        spawnUrl: 'https://raw.githubusercontent.com/BohemiaInteractive/DayZ-Central-Economy/master/dayzOffline.sakhal/cfgplayerspawnpoints.xml'
+    }
+};
+
+// Location data for map labels - EXACT from Loot Spawn Remover
+const LOCATIONS = {
+    chernarus: [
+        // Large Cities
+        { name: 'CHERNOGORSK', x: 6649, z: 2501, type: 'city' },
+        { name: 'ELEKTROZAVODSK', x: 10236, z: 1978, type: 'city' },
+        { name: 'BEREZINO', x: 12431, z: 9712, type: 'city' },
+        { name: 'NOVODMITROVSK', x: 11273, z: 14338, type: 'city' },
+        { name: 'SEVEROGRAD', x: 8007, z: 12720, type: 'city' },
+        { name: 'SVETLOYARSK', x: 13973, z: 13221, type: 'city' },
+        // Towns
+        { name: 'Zelenogorsk', x: 2735, z: 5365, type: 'town' },
+        { name: 'Vybor', x: 3784, z: 8917, type: 'town' },
+        { name: 'Gorka', x: 9510, z: 8890, type: 'town' },
+        { name: 'Polyana', x: 10688, z: 8032, type: 'town' },
+        { name: 'Solnechny', x: 13418, z: 6230, type: 'town' },
+        { name: 'Kamyshovo', x: 12108, z: 3508, type: 'town' },
+        { name: 'Staroye', x: 10163, z: 5481, type: 'town' },
+        { name: 'Krasnostav', x: 11125, z: 12175, type: 'town' },
+        { name: 'Stary Sobor', x: 6106, z: 7759, type: 'town' },
+        { name: 'Novy Sobor', x: 7095, z: 7648, type: 'town' },
+        { name: 'Kabanino', x: 5356, z: 8597, type: 'town' },
+        { name: 'Grishino', x: 5970, z: 10254, type: 'town' },
+        { name: 'Lopatino', x: 2714, z: 10008, type: 'town' },
+        { name: 'Pustoshka', x: 3054, z: 7899, type: 'town' },
+        { name: 'Myshkino', x: 2040, z: 7413, type: 'town' },
+        { name: 'Pavlovo', x: 1694, z: 3871, type: 'town' },
+        { name: 'Kamenka', x: 1863, z: 2227, type: 'town' },
+        { name: 'Komarovo', x: 3654, z: 2449, type: 'town' },
+        { name: 'Balota', x: 4473, z: 2447, type: 'town' },
+        { name: 'Mogilevka', x: 7571, z: 5163, type: 'town' },
+        { name: 'Pusta', x: 9189, z: 3876, type: 'town' },
+        { name: 'Dolina', x: 11267, z: 6593, type: 'town' },
+        { name: 'Orlovets', x: 12093, z: 7261, type: 'town' },
+        { name: 'Nizhneye', x: 12858, z: 7958, type: 'town' },
+        { name: 'Dubrovka', x: 10379, z: 9870, type: 'town' },
+        { name: 'Gvozdno', x: 8615, z: 11830, type: 'town' },
+        { name: 'Novaya Petrovka', x: 3484, z: 12967, type: 'town' },
+        { name: 'Tisy', x: 1696, z: 14109, type: 'town' },
+        // Villages
+        { name: 'Rogovo', x: 4742, z: 6803, type: 'village' },
+        { name: 'Pogorevka', x: 4383, z: 6468, type: 'village' },
+        { name: 'Sosnovka', x: 2533, z: 6418, type: 'village' },
+        { name: 'Pulkovo', x: 4951, z: 5582, type: 'village' },
+        { name: 'Drozhino', x: 3385, z: 4881, type: 'village' },
+        { name: 'Kozlovka', x: 4451, z: 4627, type: 'village' },
+        { name: 'Nadezhdino', x: 5872, z: 4671, type: 'village' },
+        { name: 'Guglovo', x: 8427, z: 6618, type: 'village' },
+        { name: 'Vyshnoe', x: 6579, z: 6052, type: 'village' },
+        { name: 'Kumyrna', x: 8361, z: 5982, type: 'village' },
+        { name: 'Prigorodki', x: 8020, z: 3372, type: 'village' },
+        { name: 'Tulga', x: 12810, z: 4376, type: 'village' },
+        { name: 'Msta', x: 11318, z: 5353, type: 'village' },
+        { name: 'Khelm', x: 12280, z: 10820, type: 'village' },
+        { name: 'Olsha', x: 13342, z: 12940, type: 'village' },
+        { name: 'Karmanovka', x: 12411, z: 14436, type: 'village' },
+        { name: 'Turovo', x: 13609, z: 14035, type: 'village' },
+        { name: 'Dobroye', x: 12997, z: 14854, type: 'village' },
+        { name: 'Nagornoye', x: 9251, z: 14486, type: 'village' },
+        { name: 'Svergino', x: 9443, z: 13751, type: 'village' },
+        { name: 'Ratnoye', x: 6109, z: 12886, type: 'village' },
+        { name: 'Kamensk', x: 6584, z: 14446, type: 'village' },
+        { name: 'Sinystok', x: 1466, z: 11647, type: 'village' },
+        { name: 'Topolniki', x: 2861, z: 11454, type: 'village' },
+        { name: 'Zaprudnoe', x: 5118, z: 10764, type: 'village' },
+        { name: 'Polesovo', x: 5977, z: 13326, type: 'village' },
+        { name: 'Vavilovo', x: 2284, z: 11040, type: 'village' },
+        { name: 'Bor', x: 3293, z: 3964, type: 'village' },
+        { name: 'Dubovo', x: 13628, z: 3778, type: 'village' },
+        { name: 'Vysotovo', x: 5561, z: 2592, type: 'village' },
+        { name: 'Chernaya Polyana', x: 12180, z: 13738, type: 'village' },
+        // Military & Special
+        { name: 'NWAF', x: 4500, z: 10250, type: 'military' },
+        { name: 'NEAF', x: 12050, z: 12550, type: 'military' },
+        { name: 'Balota Airstrip', x: 5050, z: 2350, type: 'military' },
+        { name: 'Tisy Military', x: 1537, z: 14660, type: 'military' },
+        { name: 'Pavlovo Military', x: 2050, z: 3350, type: 'military' },
+        { name: 'Zelenogorsk Military', x: 2350, z: 5700, type: 'military' },
+        { name: 'Green Mountain', x: 3706, z: 5987, type: 'military' },
+        { name: 'Rify', x: 13062, z: 2760, type: 'landmark' },
+        { name: 'Devil\'s Castle', x: 6900, z: 11425, type: 'landmark' },
+        { name: 'Skalisty Island', x: 13700, z: 2800, type: 'landmark' }
+    ],
+    livonia: [
+        // Cities
+        { name: 'BRENA', x: 6557, z: 11746, type: 'city' },
+        { name: 'NADBOR', x: 6006, z: 3703, type: 'city' },
+        { name: 'RADUNIN', x: 7296, z: 6494, type: 'city' },
+        { name: 'TARNOW', x: 9500, z: 11405, type: 'city' },
+        { name: 'TOPOLIN', x: 1391, z: 7428, type: 'city' },
+        // Towns
+        { name: 'Adamow', x: 2713, z: 6894, type: 'town' },
+        { name: 'Bielawa', x: 1081, z: 10039, type: 'town' },
+        { name: 'Borek', x: 10020, z: 8723, type: 'town' },
+        { name: 'Dolnik', x: 11654, z: 0, type: 'town' },
+        { name: 'Gieraltow', x: 11575, z: 4145, type: 'town' },
+        { name: 'Gliniska', x: 4793, z: 10311, type: 'town' },
+        { name: 'Grabin', x: 10952, z: 11539, type: 'town' },
+        { name: 'Huta', x: 4955, z: 5360, type: 'town' },
+        { name: 'Karlin', x: 10308, z: 7012, type: 'town' },
+        { name: 'Kolembrody', x: 8510, z: 12603, type: 'town' },
+        { name: 'Konopki', x: 11846, z: 2495, type: 'town' },
+        { name: 'Lembork', x: 8796, z: 6654, type: 'town' },
+        { name: 'Lipina', x: 5824, z: 6859, type: 'town' },
+        { name: 'Lukow', x: 3205, z: 12586, type: 'town' },
+        { name: 'Muratyn', x: 4332, z: 6375, type: 'town' },
+        { name: 'Nidek', x: 6027, z: 8187, type: 'town' },
+        { name: 'Olszanka', x: 4605, z: 7810, type: 'town' },
+        { name: 'Polana', x: 2934, z: 1643, type: 'town' },
+        { name: 'Radacz', x: 3724, z: 8106, type: 'town' },
+        { name: 'Roztoka', x: 7727, z: 5187, type: 'town' },
+        { name: 'Sarnowek', x: 2964, z: 4801, type: 'town' },
+        { name: 'Sitnik', x: 11860, z: 9923, type: 'town' },
+        { name: 'Sobotka', x: 6166, z: 10679, type: 'town' },
+        { name: 'Zalesie', x: 346, z: 5431, type: 'town' },
+        { name: 'Zapadlisko', x: 8121, z: 8964, type: 'town' },
+        // Villages
+        { name: 'Bagno', x: 12208, z: 11660, type: 'village' },
+        { name: 'Drewniki', x: 5707, z: 4938, type: 'village' },
+        { name: 'Hedrykow', x: 4272, z: 4607, type: 'village' },
+        { name: 'Hrud', x: 6378, z: 9698, type: 'village' },
+        { name: 'Jezurow', x: 1651, z: 1892, type: 'village' },
+        { name: 'Maksymilian', x: 6443, z: 4665, type: 'village' },
+        { name: 'Kulno', x: 11477, z: 1932, type: 'village' },
+        { name: 'Lawenda', x: 257, z: 8847, type: 'village' },
+        { name: 'Pieklo', x: 2982, z: 3407, type: 'village' },
+        { name: 'Pionier', x: 830, z: 4686, type: 'village' },
+        { name: 'Potoki', x: 12003, z: 1437, type: 'village' },
+        { name: 'Rumianek', x: 12156, z: 5376, type: 'village' },
+        { name: 'Tymbark', x: 2524, z: 629, type: 'village' },
+        { name: 'Tymianka', x: 11696, z: 10468, type: 'village' },
+        { name: 'Widok', x: 10488, z: 1656, type: 'village' },
+        { name: 'Wrzeszcz', x: 9190, z: 4209, type: 'village' },
+        // Landmarks
+        { name: 'Branzow Castle', x: 538, z: 11977, type: 'landmark' },
+        { name: 'Dambog', x: 0, z: 522, type: 'landmark' },
+        { name: 'Grabinskie', x: 11585, z: 11503, type: 'landmark' },
+        { name: 'Jantar', x: 3208, z: 9235, type: 'landmark' },
+        { name: 'Kopa', x: 5364, z: 9027, type: 'landmark' },
+        { name: 'Krsnik', x: 7922, z: 10488, type: 'landmark' },
+        { name: 'Piorun', x: 74, z: 12800, type: 'landmark' },
+        { name: 'Polkrabiec', x: 12260, z: 6593, type: 'landmark' },
+        { name: 'Rodzanica', x: 9015, z: 1543, type: 'landmark' },
+        { name: 'Sitnickie', x: 11762, z: 10887, type: 'landmark' },
+        { name: 'Skala', x: 2629, z: 1447, type: 'landmark' },
+        { name: 'Sowa', x: 12034, z: 12695, type: 'landmark' },
+        { name: 'Swarog', x: 4644, z: 1745, type: 'landmark' },
+        { name: 'Wolisko', x: 12800, z: 11382, type: 'landmark' }
+    ],
+    sakhal: [
+        // Cities
+        { name: 'ANIVA', x: 13487, z: 7047, type: 'city' },
+        { name: 'BURUKAN', x: 2093, z: 6237, type: 'city' },
+        { name: 'NOGOVO', x: 7805, z: 7793, type: 'city' },
+        { name: 'PETROPAVLOVSK-SAKHALINSKY', x: 4377, z: 10826, type: 'city' },
+        { name: 'RUDNOGORSK', x: 14259, z: 12434, type: 'city' },
+        { name: 'SEVEROMORSK', x: 9738, z: 14094, type: 'city' },
+        // Towns
+        { name: 'Baikovo', x: 15360, z: 9831, type: 'town' },
+        { name: 'Bolotnoye', x: 4703, z: 8586, type: 'town' },
+        { name: 'Dudino', x: 6036, z: 7016, type: 'town' },
+        { name: 'Evey', x: 7961, z: 13935, type: 'town' },
+        { name: 'Lesogorovka', x: 11333, z: 9722, type: 'town' },
+        { name: 'Matrosovo', x: 14982, z: 11810, type: 'town' },
+        { name: 'Orlovo', x: 10665, z: 13755, type: 'town' },
+        { name: 'Podgornoe', x: 11351, z: 13601, type: 'town' },
+        { name: 'Rybnoye', x: 13011, z: 13002, type: 'town' },
+        { name: 'Sakhalag', x: 12668, z: 9725, type: 'town' },
+        { name: 'Shantar', x: 1614, z: 2784, type: 'town' },
+        { name: 'Shumnoye', x: 15150, z: 8780, type: 'town' },
+        { name: 'Sovetskoye', x: 6237, z: 13131, type: 'town' },
+        { name: 'Tumanovo', x: 8478, z: 14084, type: 'town' },
+        { name: 'Vostok', x: 14621, z: 8222, type: 'town' },
+        { name: 'Vysokoye', x: 11576, z: 7812, type: 'town' },
+        { name: 'Yasnomorsk', x: 6839, z: 13736, type: 'town' },
+        { name: 'Yuzhnoye', x: 11336, z: 5999, type: 'town' },
+        { name: 'Zhupanovo', x: 5486, z: 12836, type: 'town' },
+        // Villages
+        { name: 'Ayan', x: 456, z: 2354, type: 'village' },
+        { name: 'Cherepakha', x: 0, z: 11477, type: 'village' },
+        { name: 'Dolinovka', x: 10059, z: 9876, type: 'village' },
+        { name: 'Elizarovo', x: 14154, z: 4734, type: 'village' },
+        { name: 'Goryachevo', x: 8877, z: 10124, type: 'village' },
+        { name: 'Iturup', x: 10664, z: 10830, type: 'village' },
+        { name: 'Kekra', x: 7104, z: 3693, type: 'village' },
+        { name: 'Ketoy', x: 5502, z: 1298, type: 'village' },
+        { name: 'Mrak', x: 8508, z: 483, type: 'village' },
+        { name: 'Neran', x: 2048, z: 9282, type: 'village' },
+        { name: 'Slomannyy', x: 6126, z: 6143, type: 'village' },
+        { name: 'Solisko', x: 13215, z: 1358, type: 'village' },
+        { name: 'Sputnik', x: 7773, z: 15360, type: 'village' },
+        { name: 'Taranay', x: 9920, z: 6287, type: 'village' },
+        { name: 'Tikhoye', x: 6066, z: 8588, type: 'village' },
+        { name: 'Tochka', x: 3266, z: 14919, type: 'village' },
+        { name: 'Tugur', x: 1010, z: 5786, type: 'village' },
+        { name: 'Tungar', x: 13190, z: 14624, type: 'village' },
+        { name: 'Urup', x: 785, z: 0, type: 'village' },
+        { name: 'Ushki', x: 11162, z: 15171, type: 'village' },
+        { name: 'Utichiy', x: 8715, z: 4698, type: 'village' },
+        { name: 'Utios', x: 5165, z: 15065, type: 'village' },
+        { name: 'Yasnaya Polyana', x: 8142, z: 9165, type: 'village' },
+        { name: 'Zvezdny Nikel', x: 12522, z: 10415, type: 'village' },
+        // Landmarks
+        { name: 'East Peak', x: 13419, z: 9416, type: 'landmark' },
+        { name: 'Ice Ridge', x: 11094, z: 8588, type: 'landmark' },
+        { name: 'Lonely Volcano', x: 10281, z: 12362, type: 'landmark' },
+        { name: 'Missile Bay', x: 3983, z: 7043, type: 'landmark' },
+        { name: 'Ostry', x: 11978, z: 11901, type: 'landmark' },
+        { name: 'Storozh', x: 8880, z: 13140, type: 'landmark' },
+        { name: 'Troika', x: 9149, z: 9249, type: 'landmark' },
+        { name: 'Tupoy', x: 12371, z: 11457, type: 'landmark' },
+        { name: 'Wolf Peak', x: 8232, z: 11900, type: 'landmark' },
+        { name: 'Black Cape', x: 4752, z: 2982, type: 'landmark' }
+    ]
+};
+
+const GROUP_COLORS = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181', '#aa96da', '#fcbad3', '#a8d8ea', '#ffb347', '#87ceeb'];
+const TIER_COLORS = { fresh: '#22c55e', hop: '#a855f7', travel: '#06b6d4' };
+
+// ========== STATE ==========
+let S = {
+    map: 'chernarus',
+    mainMode: 'spawn',
+    currentTier: 'fresh',
+    showLabels: true,
+    filterTierView: null,
+    spawns: { fresh: [], hop: [], travel: [] },
+    vanillaSpawns: { fresh: [], hop: [], travel: [] },
+    vanillaSpawnsCache: {},
+    showVanilla: false,
+    vanillaEditable: false,
+    groups: [],
+    undoStack: [],
+    canvas: null, ctx: null,
+    img: null, loaded: false,
+    offX: 0, offY: 0, scale: 1,
+    panning: false,
+    lastX: 0, lastY: 0,
+    drawingCircle: false,
+    circleStartX: 0, circleStartZ: 0,
+    currentCircleRadius: 0
+};
+
+const MAX_UNDO = 50;
+const imageCache = {};
+
+// ========== INIT ==========
+function init() {
+    S.canvas = document.getElementById('canvas');
+    S.ctx = S.canvas.getContext('2d');
+    const area = document.getElementById('mapArea');
+    S.canvas.width = area.clientWidth;
+    S.canvas.height = area.clientHeight;
+
+    S.canvas.addEventListener('mousedown', onMouseDown);
+    S.canvas.addEventListener('mousemove', onMouseMove);
+    S.canvas.addEventListener('mouseup', onMouseUp);
+    S.canvas.addEventListener('mouseleave', onMouseUp);
+    S.canvas.addEventListener('wheel', onWheel);
+    S.canvas.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', onKey);
+    document.getElementById('fileIn').addEventListener('change', doImport);
+    window.addEventListener('resize', () => {
+        S.canvas.width = area.clientWidth;
+        S.canvas.height = area.clientHeight;
+        render();
+    });
+
+    selectMap(S.map);
+}
+
+// ========== MAP ==========
+function selectMap(key) {
+    if (key === S.map) return;
+
+    const total = S.spawns.fresh.length + S.spawns.hop.length + S.spawns.travel.length;
+    if (total > 0) {
+        if (confirm(`You have ${total} spawn points. Export before switching?\n\nOK = Export first, Cancel = Discard`)) {
+            doExport();
+        }
+    }
+
+    // Always reset everything when switching maps
+    S.spawns = { fresh: [], hop: [], travel: [] };
+    S.groups = [];
+    S.vanillaSpawns = { fresh: [], hop: [], travel: [] };
+    S.showVanilla = false;
+    S.vanillaEditable = false;
+    S.undoStack = [];
+
+    S.map = key;
+
+    document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.map-btn[data-map="${key}"]`).classList.add('active');
+    document.getElementById('mapInfo').textContent = `${MAPS[key].name} ${MAPS[key].size}m`;
+
+    updateStats();
+    updateSpawnList();
+    updateGroupList();
+    updateOrphans();
+
+    if (imageCache[key]) {
+        S.img = imageCache[key];
+        S.loaded = true;
+        document.getElementById('loading').style.display = 'none';
+        document.querySelector(`.map-btn[data-map="${key}"] .status`).textContent = '\u2713';
+        resetView();
+        return;
+    }
+
+    S.img = null;
+    S.loaded = false;
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('loadingText').textContent = 'Loading map...';
+    document.querySelector(`.map-btn[data-map="${key}"] .status`).textContent = '...';
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        imageCache[key] = img;
+        if (S.map === key) {
+            S.img = img;
+            S.loaded = true;
+            document.getElementById('loading').style.display = 'none';
+            resetView();
+        }
+        document.querySelector(`.map-btn[data-map="${key}"] .status`).textContent = '\u2713';
+    };
+    img.onerror = () => {
+        if (S.map === key) {
+            S.loaded = true;
+            document.getElementById('loading').style.display = 'none';
+            resetView();
+        }
+        document.querySelector(`.map-btn[data-map="${key}"] .status`).textContent = '\u2717';
+    };
+    img.src = MAPS[key].url;
+}
+
+function preloadAllMaps() {
+    Object.keys(MAPS).forEach(key => {
+        if (imageCache[key]) return;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            imageCache[key] = img;
+            document.querySelector(`.map-btn[data-map="${key}"] .status`).textContent = '\u2713';
+        };
+        img.onerror = () => {
+            document.querySelector(`.map-btn[data-map="${key}"] .status`).textContent = '\u2717';
+        };
+        img.src = MAPS[key].url;
+    });
+}
+
+// ========== COORDINATE CONVERSION (from loot spawn remover) ==========
+function ppm() {
+    const map = MAPS[S.map];
+    return S.img ? (S.img.width * S.scale) / map.size : (Math.min(S.canvas.width, S.canvas.height) * S.scale) / map.size;
+}
+
+function toScreen(x, z) {
+    const map = MAPS[S.map];
+    const sz = S.img ? S.img.width * S.scale : Math.min(S.canvas.width, S.canvas.height) * S.scale;
+    return { x: S.offX + (x / map.size) * sz, y: S.offY + ((map.size - z) / map.size) * sz };
+}
+
+function toWorld(sx, sy) {
+    const map = MAPS[S.map];
+    const sz = S.img ? S.img.width * S.scale : Math.min(S.canvas.width, S.canvas.height) * S.scale;
+    return {
+        x: Math.round(((sx - S.offX) / sz) * map.size * 10) / 10,
+        z: Math.round((map.size - ((sy - S.offY) / sz) * map.size) * 10) / 10
+    };
+}
+
+// ========== MODE / TIER / TABS ==========
+function setMode(mode) {
+    S.mainMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
+    document.getElementById('tierSection').style.display = mode === 'spawn' ? 'block' : 'none';
+    document.getElementById('groupHint').style.display = mode === 'group' ? 'block' : 'none';
+    document.getElementById('modeIndicator').classList.toggle('active', mode === 'group');
+
+    const helpTexts = {
+        spawn: 'Left-click: Place spawn | Right-click drag: Pan | Scroll: Zoom',
+        group: 'Left-click + drag: Draw group circle | Right-click drag: Pan | Scroll: Zoom'
+    };
+    document.getElementById('helpText').textContent = helpTexts[mode];
+    status(mode === 'group' ? 'Group mode - draw circles' : 'Spawn mode - click to place');
+}
+
+function setTier(tier) {
+    S.currentTier = tier;
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.tier-btn[data-tier="${tier}"]`).classList.add('active');
+    status(`Placing ${tier} spawns`);
+}
+
+function setTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function filterTier(tier) {
+    S.filterTierView = tier;
+    document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+
+    const indicator = document.getElementById('filterIndicator');
+    if (tier) {
+        indicator.style.display = 'flex';
+        document.getElementById('filterName').textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+    } else {
+        indicator.style.display = 'none';
+    }
+    render();
+}
+
+function toggleLabels() {
+    S.showLabels = !S.showLabels;
+    document.getElementById('showLabelsBtn').classList.toggle('active', S.showLabels);
+    render();
+}
+
+async function toggleVanilla() {
+    if (!S.showVanilla) {
+        if (!S.vanillaSpawnsCache[S.map]) {
+            await loadVanillaSpawns();
+        } else {
+            S.vanillaSpawns = JSON.parse(JSON.stringify(S.vanillaSpawnsCache[S.map]));
+        }
+        S.showVanilla = true;
+        S.vanillaEditable = false;
+        status('Vanilla spawns shown');
+    } else {
+        S.showVanilla = false;
+        S.vanillaEditable = false;
+        status('Vanilla spawns hidden');
+    }
+    render();
+}
+
+async function loadVanillaSpawns() {
+    const config = MAPS[S.map];
+    if (!config.spawnUrl) return;
+
+    document.getElementById('statusDot').classList.add('loading');
+    status(`Fetching vanilla spawns for ${config.name}...`);
+
+    try {
+        const res = await fetch(config.spawnUrl);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const text = await res.text();
+        const doc = new DOMParser().parseFromString(text, 'text/xml');
+
+        S.vanillaSpawns = { fresh: [], hop: [], travel: [] };
+        ['fresh', 'hop', 'travel'].forEach(tier => {
+            const tierEl = doc.querySelector(tier);
+            if (tierEl) {
+                tierEl.querySelectorAll('pos').forEach(p => {
+                    const x = parseFloat(p.getAttribute('x'));
+                    const z = parseFloat(p.getAttribute('z'));
+                    if (!isNaN(x) && !isNaN(z)) S.vanillaSpawns[tier].push({ x, z });
+                });
+            }
+        });
+
+        S.vanillaSpawnsCache[S.map] = JSON.parse(JSON.stringify(S.vanillaSpawns));
+        const total = S.vanillaSpawns.fresh.length + S.vanillaSpawns.hop.length + S.vanillaSpawns.travel.length;
+        document.getElementById('statusDot').classList.remove('loading');
+        status(`Loaded ${total} vanilla spawns for ${config.name}`);
+    } catch (err) {
+        document.getElementById('statusDot').classList.remove('loading');
+        status('Error fetching vanilla spawns');
+        S.showVanilla = false;
+    }
+}
+
+// ========== RENDER ==========
+function render() {
+    const { ctx, canvas, img, offX, offY, scale } = S;
+    const map = MAPS[S.map];
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111113';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (img) {
+        const sz = img.width * scale;
+        ctx.drawImage(img, offX, offY, sz, sz);
+    } else if (S.loaded) {
+        drawGrid();
+    }
+
+    // Draw location labels
+    drawLocationLabels();
+
+    // Draw groups
+    S.groups.forEach(g => {
+        const pos = toScreen(g.x, g.z);
+        const r = (g.radius / map.size) * (S.img ? S.img.width * S.scale : Math.min(canvas.width, canvas.height) * S.scale);
+
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = g.color + '30';
+        ctx.fill();
+        ctx.strokeStyle = g.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Space Grotesk, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(g.name, pos.x, pos.y - r - 6);
+    });
+
+    // Draw current circle being drawn
+    if (S.drawingCircle && S.currentCircleRadius > 0) {
+        const pos = toScreen(S.circleStartX, S.circleStartZ);
+        const r = (S.currentCircleRadius / map.size) * (S.img ? S.img.width * S.scale : Math.min(canvas.width, canvas.height) * S.scale);
+
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round(S.currentCircleRadius)}m`, pos.x, pos.y);
+    }
+
+    // Draw vanilla spawns
+    if (S.showVanilla) {
+        const tiers = S.filterTierView ? [S.filterTierView] : ['fresh', 'hop', 'travel'];
+        tiers.forEach(tier => {
+            S.vanillaSpawns[tier].forEach(sp => {
+                const pos = toScreen(sp.x, sp.z);
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = TIER_COLORS[tier] + '60';
+                ctx.fill();
+                ctx.strokeStyle = TIER_COLORS[tier];
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+        });
+    }
+
+    // Draw user spawns
+    const tiers = S.filterTierView ? [S.filterTierView] : ['fresh', 'hop', 'travel'];
+    tiers.forEach(tier => {
+        S.spawns[tier].forEach(sp => {
+            const pos = toScreen(sp.x, sp.z);
+            const isOrphan = S.groups.length > 0 && !getSpawnGroup(sp);
+
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = isOrphan ? '#ef4444' : TIER_COLORS[tier];
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+    });
+
+    updateStats();
+}
+
+function drawLocationLabels() {
+    if (!S.showLabels) return;
+
+    const { ctx } = S;
+    const locations = LOCATIONS[S.map] || [];
+
+    locations.forEach(loc => {
+        const pos = toScreen(loc.x, loc.z);
+        if (pos.x < -100 || pos.x > S.canvas.width + 100 || pos.y < -50 || pos.y > S.canvas.height + 50) return;
+
+        let color, fontSize;
+        switch (loc.type) {
+            case 'city': color = '#ffffff'; fontSize = 11; break;
+            case 'town': color = '#d0d0d0'; fontSize = 10; break;
+            case 'village': color = '#a0a0a0'; fontSize = 9; break;
+            case 'military': color = '#ef4444'; fontSize = 10; break;
+            case 'landmark': color = '#f59e0b'; fontSize = 9; break;
+            default: color = '#ffffff'; fontSize = 10;
+        }
+
+        ctx.font = `bold ${fontSize}px Space Grotesk, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.strokeText(loc.name, pos.x, pos.y);
+        ctx.fillStyle = color;
+        ctx.fillText(loc.name, pos.x, pos.y);
+    });
+}
+
+function drawGrid() {
+    const { ctx, offX, offY, scale } = S;
+    const map = MAPS[S.map];
+    const sz = map.size * ppm();
+    ctx.strokeStyle = '#27272a';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= map.size; i += 1000) {
+        const x = offX + (i / map.size) * sz;
+        const y = offY + ((map.size - i) / map.size) * sz;
+        ctx.beginPath(); ctx.moveTo(x, offY); ctx.lineTo(x, offY + sz); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(offX, y); ctx.lineTo(offX + sz, y); ctx.stroke();
+    }
+}
+
+// ========== MOUSE ==========
+function onMouseDown(e) {
+    const rect = S.canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    S.lastX = sx; S.lastY = sy;
+
+    if (e.button === 2) {
+        S.panning = true;
+        S.canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    if (e.button === 0) {
+        if (S.mainMode === 'group') {
+            const wp = toWorld(sx, sy);
+            S.drawingCircle = true;
+            S.circleStartX = wp.x;
+            S.circleStartZ = wp.z;
+            S.currentCircleRadius = 0;
+        } else if (S.mainMode === 'spawn') {
+            // Handle vanilla spawn copy prompt
+            if (S.showVanilla && !S.vanillaEditable) {
+                const total = S.vanillaSpawns.fresh.length + S.vanillaSpawns.hop.length + S.vanillaSpawns.travel.length;
+                if (confirm(`${total} vanilla spawns visible.\n\nOK = Copy to your spawns for editing\nCancel = Start fresh (vanilla as reference)`)) {
+                    saveUndoState();
+                    S.spawns.fresh = [...S.vanillaSpawns.fresh.map(s => ({...s}))];
+                    S.spawns.hop = [...S.vanillaSpawns.hop.map(s => ({...s}))];
+                    S.spawns.travel = [...S.vanillaSpawns.travel.map(s => ({...s}))];
+                    S.showVanilla = false;
+                    updateSpawnList();
+                    updateOrphans();
+                }
+                S.vanillaEditable = true;
+            }
+
+            const wp = toWorld(sx, sy);
+            saveUndoState();
+            S.spawns[S.currentTier].push({ x: wp.x, z: wp.z });
+            updateSpawnList();
+            updateOrphans();
+            render();
+            status(`Placed ${S.currentTier} spawn at ${Math.round(wp.x)}, ${Math.round(wp.z)}`);
+        }
+    }
+}
+
+function onMouseMove(e) {
+    const rect = S.canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const wp = toWorld(sx, sy);
+
+    document.getElementById('coordX').textContent = wp.x.toFixed(1);
+    document.getElementById('coordZ').textContent = wp.z.toFixed(1);
+
+    if (S.panning) {
+        S.offX += sx - S.lastX;
+        S.offY += sy - S.lastY;
+        render();
+    } else if (S.drawingCircle) {
+        const dx = wp.x - S.circleStartX;
+        const dz = wp.z - S.circleStartZ;
+        S.currentCircleRadius = Math.sqrt(dx * dx + dz * dz);
+        render();
+    }
+
+    S.lastX = sx; S.lastY = sy;
+}
+
+function onMouseUp(e) {
+    if (S.panning) {
+        S.panning = false;
+        S.canvas.style.cursor = 'crosshair';
+        return;
+    }
+
+    if (S.drawingCircle && S.currentCircleRadius > 50) {
+        saveUndoState();
+        const id = Date.now();
+        S.groups.push({
+            id,
+            name: `Group ${S.groups.length + 1}`,
+            x: S.circleStartX,
+            z: S.circleStartZ,
+            radius: S.currentCircleRadius,
+            color: GROUP_COLORS[S.groups.length % GROUP_COLORS.length]
+        });
+        updateGroupList();
+        updateOrphans();
+        status(`Created group (${Math.round(S.currentCircleRadius)}m radius)`);
+    }
+    S.drawingCircle = false;
+    S.currentCircleRadius = 0;
+    render();
+}
+
+function onWheel(e) {
+    e.preventDefault();
+    const rect = S.canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const zf = e.deltaY > 0 ? 0.9 : 1.1;
+    const ns = Math.max(0.1, Math.min(10, S.scale * zf));
+    const sd = ns / S.scale;
+    S.offX = mx - (mx - S.offX) * sd;
+    S.offY = my - (my - S.offY) * sd;
+    S.scale = ns;
+    render();
+}
+
+function onKey(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        doUndo();
+    } else if (e.key === 'Delete') {
+        doClear();
+    }
+}
+
+// ========== VIEW ==========
+function resetView() {
+    const area = document.getElementById('mapArea');
+    if (S.img) {
+        const fs = Math.min(area.clientWidth / S.img.width, area.clientHeight / S.img.height) * 0.95;
+        S.scale = fs;
+        S.offX = (area.clientWidth - S.img.width * fs) / 2;
+        S.offY = (area.clientHeight - S.img.height * fs) / 2;
+    } else {
+        S.scale = 1;
+        S.offX = (area.clientWidth - Math.min(area.clientWidth, area.clientHeight) * 0.95) / 2;
+        S.offY = (area.clientHeight - Math.min(area.clientWidth, area.clientHeight) * 0.95) / 2;
+    }
+    render();
+}
+
+function zoomIn() {
+    const cx = S.canvas.width / 2;
+    const cy = S.canvas.height / 2;
+    const ns = Math.min(10, S.scale * 1.2);
+    const sd = ns / S.scale;
+    S.offX = cx - (cx - S.offX) * sd;
+    S.offY = cy - (cy - S.offY) * sd;
+    S.scale = ns;
+    render();
+}
+
+function zoomOut() {
+    const cx = S.canvas.width / 2;
+    const cy = S.canvas.height / 2;
+    const ns = Math.max(0.1, S.scale / 1.2);
+    const sd = ns / S.scale;
+    S.offX = cx - (cx - S.offX) * sd;
+    S.offY = cy - (cy - S.offY) * sd;
+    S.scale = ns;
+    render();
+}
+
+// ========== UNDO ==========
+function saveUndoState() {
+    S.undoStack.push({
+        spawns: JSON.parse(JSON.stringify(S.spawns)),
+        groups: JSON.parse(JSON.stringify(S.groups))
+    });
+    if (S.undoStack.length > MAX_UNDO) S.undoStack.shift();
+}
+
+function doUndo() {
+    if (S.undoStack.length === 0) { status('Nothing to undo'); return; }
+    const state = S.undoStack.pop();
+    S.spawns = state.spawns;
+    S.groups = state.groups;
+    updateSpawnList();
+    updateGroupList();
+    updateOrphans();
+    render();
+    status('Undo successful');
+}
+
+// ========== GROUPS ==========
+function getSpawnGroup(spawn) {
+    for (const g of S.groups) {
+        const dx = spawn.x - g.x;
+        const dz = spawn.z - g.z;
+        if (Math.sqrt(dx * dx + dz * dz) <= g.radius) return g;
+    }
+    return null;
+}
+
+function countSpawnsInGroup(group) {
+    const count = { fresh: 0, hop: 0, travel: 0, total: 0 };
+    ['fresh', 'hop', 'travel'].forEach(tier => {
+        S.spawns[tier].forEach(s => {
+            const dx = s.x - group.x;
+            const dz = s.z - group.z;
+            if (Math.sqrt(dx * dx + dz * dz) <= group.radius) {
+                count[tier]++;
+                count.total++;
+            }
+        });
+    });
+    return count;
+}
+
+function focusSpawn(x, z) {
+    const pos = toScreen(x, z);
+    S.offX = S.canvas.width / 2 - (pos.x - S.offX);
+    S.offY = S.canvas.height / 2 - (pos.y - S.offY);
+    render();
+}
+
+function focusGroup(id) {
+    const g = S.groups.find(g => g.id === id);
+    if (g) focusSpawn(g.x, g.z);
+}
+
+function delSpawn(tier, idx) {
+    saveUndoState();
+    S.spawns[tier].splice(idx, 1);
+    updateSpawnList();
+    updateOrphans();
+    render();
+    status('Spawn deleted');
+}
+
+function delGroup(id) {
+    saveUndoState();
+    S.groups = S.groups.filter(g => g.id !== id);
+    updateGroupList();
+    updateOrphans();
+    render();
+    status('Group deleted');
+}
+
+function renameGroup(id, name) {
+    const g = S.groups.find(g => g.id === id);
+    if (g) g.name = name;
+    render();
+}
+
+function doClear() {
+    const total = S.spawns.fresh.length + S.spawns.hop.length + S.spawns.travel.length + S.groups.length;
+    if (total === 0) { status('Nothing to clear'); return; }
+    if (!confirm('Clear all spawn points and groups?')) return;
+    saveUndoState();
+    S.spawns = { fresh: [], hop: [], travel: [] };
+    S.groups = [];
+    updateSpawnList();
+    updateGroupList();
+    updateOrphans();
+    render();
+    status('All cleared');
+}
+
+// ========== UI UPDATES ==========
+function updateStats() {
+    document.getElementById('statFresh').textContent = S.spawns.fresh.length;
+    document.getElementById('statHop').textContent = S.spawns.hop.length;
+    document.getElementById('statTravel').textContent = S.spawns.travel.length;
+    document.getElementById('statGroups').textContent = S.groups.length;
+}
+
+function updateSpawnList() {
+    const list = document.getElementById('spawnList');
+    const all = [
+        ...S.spawns.fresh.map((s, i) => ({ ...s, tier: 'fresh', idx: i })),
+        ...S.spawns.hop.map((s, i) => ({ ...s, tier: 'hop', idx: i })),
+        ...S.spawns.travel.map((s, i) => ({ ...s, tier: 'travel', idx: i }))
+    ];
+
+    if (all.length === 0) {
+        list.innerHTML = '<div class="empty-state">Click map to add spawns</div>';
+        return;
+    }
+
+    list.innerHTML = all.slice(0, 100).map(s => {
+        const isOrphan = S.groups.length > 0 && !getSpawnGroup(s);
+        const color = isOrphan ? '#ef4444' : TIER_COLORS[s.tier];
+        return `
+            <div class="spawn-item ${s.tier}-item ${isOrphan ? 'orphan' : ''}" onclick="focusSpawn(${s.x}, ${s.z})">
+                <div class="spawn-dot" style="background:${color}"></div>
+                <div class="spawn-info">
+                    <div class="spawn-name">${s.tier.charAt(0).toUpperCase() + s.tier.slice(1)}</div>
+                    <div class="spawn-coords">X:${Math.round(s.x)} Z:${Math.round(s.z)}</div>
+                </div>
+                <div class="spawn-action" onclick="event.stopPropagation();delSpawn('${s.tier}',${s.idx})">&#10005;</div>
+            </div>
+        `;
+    }).join('');
+
+    if (all.length > 100) {
+        list.innerHTML += `<div style="padding:0.5rem;color:var(--text-muted);font-size:0.6875rem;">...and ${all.length - 100} more</div>`;
+    }
+}
+
+function updateGroupList() {
+    const list = document.getElementById('groupList');
+
+    if (S.groups.length === 0) {
+        list.innerHTML = '<div class="empty-state">Draw circles in Group Mode</div>';
+        return;
+    }
+
+    list.innerHTML = S.groups.map(g => {
+        const count = countSpawnsInGroup(g);
+        return `
+            <div class="group-item">
+                <div class="group-header">
+                    <div class="group-color" style="background:${g.color}"></div>
+                    <input class="group-name-input" type="text" value="${g.name}" onchange="renameGroup(${g.id}, this.value)">
+                    <div style="display:flex;gap:0.25rem;">
+                        <button class="btn btn-small btn-secondary" onclick="focusGroup(${g.id})">Focus</button>
+                        <button class="btn btn-small btn-secondary" onclick="delGroup(${g.id})" style="color:var(--danger)">&#10005;</button>
+                    </div>
+                </div>
+                <div class="group-stats">
+                    <span>Total: ${count.total}</span>
+                    <span>Fresh: ${count.fresh}</span>
+                    <span>Hop: ${count.hop}</span>
+                    <span>Travel: ${count.travel}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateOrphans() {
+    const panel = document.getElementById('orphanPanel');
+    const countEl = document.getElementById('orphanCount');
+
+    if (S.groups.length === 0) { panel.style.display = 'none'; return; }
+
+    let orphanCount = 0;
+    ['fresh', 'hop', 'travel'].forEach(tier => {
+        S.spawns[tier].forEach(s => { if (!getSpawnGroup(s)) orphanCount++; });
+    });
+
+    panel.style.display = orphanCount > 0 ? 'block' : 'none';
+    countEl.textContent = orphanCount;
+}
+
+function status(text) {
+    document.getElementById('statusText').textContent = text;
+}
+
+// ========== EXPORT / IMPORT ==========
+function fmtCoord(v) { return v.toFixed(6); }
+
+function validateSpawnParams() {
+    const errors = [];
+    
+    // Validate min/max pairs
+    const pairs = [
+        ['p1', 'p2', 'Infected distance'],
+        ['p3', 'p4', 'Player distance'],
+        ['p5', 'p6', 'Static distance']
+    ];
+    
+    for (const [minId, maxId, name] of pairs) {
+        const minVal = parseFloat(document.getElementById(minId).value);
+        const maxVal = parseFloat(document.getElementById(maxId).value);
+        if (isNaN(minVal) || isNaN(maxVal)) {
+            errors.push(`${name}: Invalid number`);
+        } else if (minVal < 0) {
+            errors.push(`${name}: Min cannot be negative`);
+        } else if (minVal > maxVal) {
+            errors.push(`${name}: Min (${minVal}) exceeds max (${maxVal})`);
+        }
+    }
+    
+    // Validate steepness
+    const minSteep = parseFloat(document.getElementById('g4').value);
+    const maxSteep = parseFloat(document.getElementById('g5').value);
+    if (minSteep > maxSteep) {
+        errors.push(`Steepness: Min (${minSteep}) exceeds max (${maxSteep})`);
+    }
+    
+    // Validate group params
+    const lifetime = parseInt(document.getElementById('gp1').value);
+    const counter = parseInt(document.getElementById('gp2').value);
+    if (lifetime === 0) {
+        errors.push('Group lifetime of 0 causes immediate despawn');
+    }
+    if (counter === 0) {
+        errors.push('Group counter of 0 disables the group entirely');
+    }
+    
+    // Validate grid params
+    const density = parseFloat(document.getElementById('g1').value);
+    const width = parseFloat(document.getElementById('g2').value);
+    const height = parseFloat(document.getElementById('g3').value);
+    if (density <= 0 || width <= 0 || height <= 0) {
+        errors.push('Grid density, width, and height must be positive');
+    }
+    
+    return errors;
+}
+
+function escXmlAttr(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+function buildTierXML(tierName, tierSpawns) {
+    if (tierSpawns.length === 0) return '';
+
+    const gpEnable = document.getElementById('gpEnable').checked;
+    const gpRegular = document.getElementById('gpRegular').checked;
+    const indent = '    ';
+
+    let xml = `${indent}<${tierName}>\n`;
+    xml += `${indent}    <spawn_params>\n`;
+    xml += `${indent}        <min_dist_infected>${document.getElementById('p1').value}</min_dist_infected>\n`;
+    xml += `${indent}        <max_dist_infected>${document.getElementById('p2').value}</max_dist_infected>\n`;
+    xml += `${indent}        <min_dist_player>${document.getElementById('p3').value}</min_dist_player>\n`;
+    xml += `${indent}        <max_dist_player>${document.getElementById('p4').value}</max_dist_player>\n`;
+    xml += `${indent}        <min_dist_static>${document.getElementById('p5').value}</min_dist_static>\n`;
+    xml += `${indent}        <max_dist_static>${document.getElementById('p6').value}</max_dist_static>\n`;
+    xml += `${indent}    </spawn_params>\n`;
+    xml += `${indent}    <generator_params>\n`;
+    xml += `${indent}        <grid_density>${document.getElementById('g1').value}</grid_density>\n`;
+    xml += `${indent}        <grid_width>${document.getElementById('g2').value}</grid_width>\n`;
+    xml += `${indent}        <grid_height>${document.getElementById('g3').value}</grid_height>\n`;
+    xml += `${indent}        <min_steepness>${document.getElementById('g4').value}</min_steepness>\n`;
+    xml += `${indent}        <max_steepness>${document.getElementById('g5').value}</max_steepness>\n`;
+    xml += `${indent}    </generator_params>\n`;
+    xml += `${indent}    <generator_posbubbles>\n`;
+
+    if (gpEnable && S.groups.length > 0) {
+        S.groups.forEach(g => {
+            const groupSpawns = tierSpawns.filter(s => {
+                const dx = s.x - g.x;
+                const dz = s.z - g.z;
+                return Math.sqrt(dx * dx + dz * dz) <= g.radius;
+            });
+
+            if (groupSpawns.length > 0) {
+                const lifetime = document.getElementById('gp1').value;
+                const counter = document.getElementById('gp2').value;
+                const regularAttr = gpRegular ? ' regular="1"' : '';
+                xml += `${indent}        <group name="${escXmlAttr(g.name)}" lifetime="${lifetime}" counter="${counter}"${regularAttr}>\n`;
+                groupSpawns.forEach(s => {
+                    xml += `${indent}            <pos x="${fmtCoord(s.x)}" z="${fmtCoord(s.z)}" />\n`;
+                });
+                xml += `${indent}        </group>\n`;
+            }
+        });
+
+        const ungrouped = tierSpawns.filter(s => !getSpawnGroup(s));
+        if (ungrouped.length > 0) {
+            xml += `${indent}        <group name="Ungrouped">\n`;
+            ungrouped.forEach(s => {
+                xml += `${indent}            <pos x="${fmtCoord(s.x)}" z="${fmtCoord(s.z)}" />\n`;
+            });
+            xml += `${indent}        </group>\n`;
+        }
+    } else {
+        if (tierSpawns.length > 0) {
+            xml += `${indent}        <group name="Default">\n`;
+            tierSpawns.forEach(s => {
+                xml += `${indent}            <pos x="${fmtCoord(s.x)}" z="${fmtCoord(s.z)}" />\n`;
+            });
+            xml += `${indent}        </group>\n`;
+        }
+    }
+
+    xml += `${indent}    </generator_posbubbles>\n`;
+    xml += `${indent}</${tierName}>\n`;
+    return xml;
+}
+
+function doExport() {
+    const total = S.spawns.fresh.length + S.spawns.hop.length + S.spawns.travel.length;
+    if (total === 0) { alert('No spawn points to export!'); return; }
+
+    // Validate parameters
+    const errors = validateSpawnParams();
+    if (errors.length > 0) {
+        const proceed = confirm('Validation warnings:\n\n' + errors.join('\n') + '\n\nExport anyway?');
+        if (!proceed) return;
+    }
+
+    let xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>\n`;
+    xml += `<playerspawnpoints>\n`;
+    xml += buildTierXML('fresh', S.spawns.fresh);
+    xml += buildTierXML('hop', S.spawns.hop);
+    xml += buildTierXML('travel', S.spawns.travel);
+    xml += `</playerspawnpoints>\n`;
+
+    // Normalize line endings for Nitrado
+    const normalized = xml.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const blob = new Blob([normalized], {type: 'application/xml;charset=UTF-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cfgplayerspawnpoints.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+
+    status(`Exported ${total} spawns across ${['fresh','hop','travel'].filter(t => S.spawns[t].length > 0).length} tier(s)`);
+}
+
+function doExportJSON() {
+    const all = [...S.spawns.fresh, ...S.spawns.hop, ...S.spawns.travel];
+    if (all.length === 0) { alert('No spawns!'); return; }
+
+    let marker = document.getElementById('markerObj').value;
+    if (marker === 'custom') {
+        marker = document.getElementById('customMarker').value.trim();
+        if (!marker) { alert('Enter custom classname'); return; }
+    }
+
+    const objects = all.map(s => ({
+        name: marker,
+        pos: [s.x, 500, s.z],
+        ypr: [0.0, 0.0, -0.0],
+        scale: 0.9999998211860657,
+        enableCEPersistency: 0,
+        customString: ""
+    }));
+
+    const json = JSON.stringify({ Objects: objects }, null, 4);
+    const blob = new Blob([json], {type: 'application/json;charset=UTF-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `spawn_markers_${S.map}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+    status('JSON exported');
+}
+
+function doImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        try {
+            const doc = new DOMParser().parseFromString(ev.target.result, 'text/xml');
+            
+            // Check for parse errors
+            const parseError = doc.querySelector('parsererror');
+            if (parseError) {
+                throw new Error('Invalid XML format: ' + parseError.textContent.substring(0, 100));
+            }
+            
+            S.spawns = { fresh: [], hop: [], travel: [] };
+            S.groups = [];
+
+            ['fresh', 'hop', 'travel'].forEach(tier => {
+                const tierEl = doc.querySelector(tier);
+                if (tierEl) {
+                    tierEl.querySelectorAll('group').forEach(g => {
+                        g.querySelectorAll('pos').forEach(p => {
+                            const x = parseFloat(p.getAttribute('x'));
+                            const z = parseFloat(p.getAttribute('z'));
+                            if (!isNaN(x) && !isNaN(z)) {
+                                S.spawns[tier].push({ x, z });
+                            }
+                        });
+                    });
+                    tierEl.querySelectorAll('generator_posbubbles > pos').forEach(p => {
+                        const x = parseFloat(p.getAttribute('x'));
+                        const z = parseFloat(p.getAttribute('z'));
+                        if (!isNaN(x) && !isNaN(z)) {
+                            S.spawns[tier].push({ x, z });
+                        }
+                    });
+                }
+            });
+
+            // Old format support
+            doc.querySelectorAll('fresh_spawns pos').forEach(p => {
+                const x = parseFloat(p.getAttribute('x'));
+                const z = parseFloat(p.getAttribute('z'));
+                if (!isNaN(x) && !isNaN(z)) {
+                    S.spawns.fresh.push({ x, z });
+                }
+            });
+
+            // Import params if present
+            const setVal = (id, sel) => {
+                const el = doc.querySelector(sel);
+                if (el) document.getElementById(id).value = el.textContent;
+            };
+            setVal('p1', 'min_dist_infected'); setVal('p2', 'max_dist_infected');
+            setVal('p3', 'min_dist_player'); setVal('p4', 'max_dist_player');
+            setVal('p5', 'spawn_params min_dist_static'); setVal('p6', 'spawn_params max_dist_static');
+            setVal('g1', 'grid_density'); setVal('g2', 'grid_width'); setVal('g3', 'grid_height');
+            setVal('g4', 'min_steepness'); setVal('g5', 'max_steepness');
+            setVal('gp1', 'lifetime'); setVal('gp2', 'counter');
+
+            const total = S.spawns.fresh.length + S.spawns.hop.length + S.spawns.travel.length;
+            updateSpawnList();
+            updateGroupList();
+            updateOrphans();
+            render();
+            status(`Imported: ${S.spawns.fresh.length} fresh, ${S.spawns.hop.length} hop, ${S.spawns.travel.length} travel`);
+        } catch (err) { alert('Import Error: ' + err.message); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+// ========== START ==========
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    preloadAllMaps();
+});
+</script>
+</body>
+</html>
